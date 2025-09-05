@@ -136,6 +136,23 @@ router.get('/monthly', async (req, res) => {
       [monthNum, yearNum, monthNum, yearNum]
     );
 
+    // Get milk shipments per day
+    const [shipments] = await db.promise().query(
+      `SELECT 
+        date,
+        SUM(amount) as total_amount,
+        destination,
+        notes
+       FROM milk_shipments 
+       WHERE MONTH(date) = ? AND YEAR(date) = ?
+       GROUP BY date, destination, notes
+       ORDER BY date DESC`,
+      [monthNum, yearNum]
+    );
+
+    // Calculate total shipments
+    const totalShipment = shipments.reduce((sum, shipment) => sum + parseFloat(shipment.total_amount), 0);
+
     // Calculate totals
     const totalIncome = incomes.reduce((sum, income) => sum + parseFloat(income.amount), 0);
     const totalExpense = expenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
@@ -177,11 +194,16 @@ router.get('/monthly', async (req, res) => {
           items: maintenances,
           total: totalMaintenance
         },
+        shipments: {
+          items: shipments,
+          total: totalShipment
+        },
         summary: {
           totalIncome: totalIncome,
           totalMilkValue: totalMilkValue,
           totalExpense: totalExpense,
           totalMaintenance: totalMaintenance,
+          totalShipment: totalShipment,
           totalSalary: totalSalary,
           netIncome: netIncome
         }

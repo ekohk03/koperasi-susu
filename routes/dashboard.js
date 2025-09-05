@@ -426,4 +426,28 @@ router.get('/charts/attendance-status', async (req, res) => {
   }
 });
 
+// @route   GET /api/dashboard/recent-shipments
+// @desc    Get recent milk shipments
+// @access  Private
+router.get('/recent-shipments', async (req, res) => {
+  try {
+    const [recentShipments] = await db.promise().query(
+      `SELECT * FROM milk_shipments
+      ORDER BY date DESC, id DESC
+      LIMIT 5`
+    );
+
+    res.json({
+      success: true,
+      data: recentShipments
+    });
+  } catch (error) {
+    console.error('Get recent shipments error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
 module.exports = router;

@@ -1,24 +1,23 @@
-import { 
-    Card, 
-    CardContent, 
-    Grid, 
-    Typography, 
-    Box, 
-    Avatar, 
+import {
+    Card,
+    CardContent,
+    Grid,
+    Typography,
+    Box,
+    Avatar,
     Table,
     TableBody,
     TableCell,
     TableHead,
     TableRow,
-    Chip,
-    Divider
+    Chip
 } from '@mui/material';
-import { 
-    TrendingUp, 
-    TrendingDown, 
-    People, 
-    AttachMoney, 
-    LocalShipping, 
+import {
+    TrendingUp,
+    TrendingDown,
+    People,
+    AttachMoney,
+    LocalShipping,
     MonetizationOn,
     Build,
     CheckCircle,
@@ -28,14 +27,14 @@ import {
 } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { 
-    CartesianGrid, 
-    XAxis, 
-    YAxis, 
-    Tooltip as RechartsTooltip, 
-    ResponsiveContainer, 
-    Legend, 
-    BarChart, 
+import {
+    CartesianGrid,
+    XAxis,
+    YAxis,
+    Tooltip as RechartsTooltip,
+    ResponsiveContainer,
+    Legend,
+    BarChart,
     Bar,
     AreaChart,
     Area
@@ -50,12 +49,12 @@ export default function DashboardHome() {
         queryKey: ['dashboard-overview'],
         queryFn: async () => (await axios.get('/api/dashboard/overview')).data.data
     });
-    
+
     const { data: weekly } = useQuery({
         queryKey: ['collections-weekly'],
         queryFn: async () => (await axios.get('/api/dashboard/charts/collections-weekly')).data.data
     });
-    
+
     const { data: financial } = useQuery({
         queryKey: ['financial-monthly'],
         queryFn: async () => (await axios.get('/api/dashboard/charts/financial-monthly')).data.data
@@ -81,12 +80,17 @@ export default function DashboardHome() {
         queryFn: async () => (await axios.get('/api/dashboard/recent-expenses')).data.data
     });
 
+    const { data: recentShipments } = useQuery({
+        queryKey: ['recent-shipments'],
+        queryFn: async () => (await axios.get('/api/dashboard/recent-shipments')).data.data
+    });
+
     const totalPresentToday = overview?.today?.attendances?.present || 0;
     const totalAbsentToday = overview?.today?.attendances?.leave || 0;
     const totalSickToday = overview?.today?.attendances?.sick || 0;
     const totalHolidayToday = overview?.today?.attendances?.holiday || 0;
     const totalRecordsToday = totalPresentToday + totalAbsentToday + totalSickToday + totalHolidayToday;
-    
+
     // Prepare financial summary data
     const financialSummary = [
         {
@@ -109,8 +113,8 @@ export default function DashboardHome() {
         },
         {
             title: 'Profit',
-            value: formatRupiah((overview?.monthly?.income?.total_amount || 0) - 
-                (overview?.monthly?.expenses?.total_amount || 0) - 
+            value: formatRupiah((overview?.monthly?.income?.total_amount || 0) -
+                (overview?.monthly?.expenses?.total_amount || 0) -
                 (overview?.monthly?.maintenance?.total_cost || 0)),
             icon: <MonetizationOn sx={{ color: '#2196F3' }} />,
             color: '#2196F3'
@@ -132,7 +136,7 @@ export default function DashboardHome() {
             {/* Key Metrics Cards */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card sx={{ 
+                    <Card sx={{
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         color: 'white',
                         height: '100%'
@@ -146,8 +150,8 @@ export default function DashboardHome() {
                                     <Typography variant="body2" sx={{ opacity: 0.8 }}>
                                         Total Pengepul
                                     </Typography>
-                                    <Typography 
-                                        variant="h4" 
+                                    <Typography
+                                        variant="h4"
                                         fontWeight={700}
                                         sx={{
                                             fontSize: { xs: 26, sm: 28, md: 32 },
@@ -165,7 +169,7 @@ export default function DashboardHome() {
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card sx={{ 
+                    <Card sx={{
                         background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                         color: 'white',
                         height: '100%'
@@ -179,8 +183,8 @@ export default function DashboardHome() {
                                     <Typography variant="body2" sx={{ opacity: 0.8 }}>
                                         Total Karyawan
                                     </Typography>
-                                    <Typography 
-                                        variant="h4" 
+                                    <Typography
+                                        variant="h4"
                                         fontWeight={700}
                                         sx={{
                                             fontSize: { xs: 26, sm: 28, md: 32 },
@@ -198,7 +202,7 @@ export default function DashboardHome() {
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card sx={{ 
+                    <Card sx={{
                         background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                         color: 'white',
                         height: '100%'
@@ -212,8 +216,8 @@ export default function DashboardHome() {
                                     <Typography variant="body2" sx={{ opacity: 0.8 }}>
                                         Susu Hari Ini
                                     </Typography>
-                                    <Typography 
-                                        variant="h4" 
+                                    <Typography
+                                        variant="h4"
                                         fontWeight={700}
                                         sx={{
                                             fontSize: { xs: 26, sm: 28, md: 32 },
@@ -231,7 +235,7 @@ export default function DashboardHome() {
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={3}>
-                    <Card sx={{ 
+                    <Card sx={{
                         background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
                         color: 'white',
                         height: '100%'
@@ -245,8 +249,8 @@ export default function DashboardHome() {
                                     <Typography variant="body2" sx={{ opacity: 0.8 }}>
                                         Pendapatan Bulan Ini
                                     </Typography>
-                                    <Typography 
-                                        variant="h4" 
+                                    <Typography
+                                        variant="h4"
                                         fontWeight={700}
                                         sx={{
                                             fontSize: { xs: 22, sm: 26, md: 30 },
@@ -275,8 +279,8 @@ export default function DashboardHome() {
                             </Typography>
                             <Box sx={{ height: 300, mt: 2 }}>
                                 <ResponsiveContainer>
-                                    <AreaChart data={(weekly ?? []).map((d: any) => ({ 
-                                        ...d, 
+                                    <AreaChart data={(weekly ?? []).map((d: any) => ({
+                                        ...d,
                                         date: dayjs(d.date).format('DD/MM'),
                                         total_milk: Number(d.total_milk || 0),
                                         total_income: Number(d.total_income || 0)
@@ -285,28 +289,28 @@ export default function DashboardHome() {
                                         <XAxis dataKey="date" />
                                         <YAxis yAxisId="left" />
                                         <YAxis yAxisId="right" orientation="right" />
-                                        <RechartsTooltip 
+                                        <RechartsTooltip
                                             formatter={(value: any, name: any) => [
                                                 name === 'total_milk' ? `${value} L` : formatRupiah(value),
                                                 name === 'total_milk' ? 'Total Susu' : 'Pendapatan'
                                             ]}
                                         />
                                         <Legend />
-                                        <Area 
+                                        <Area
                                             yAxisId="left"
-                                            type="monotone" 
-                                            dataKey="total_milk" 
-                                            stroke="#4CAF50" 
-                                            fill="#4CAF50" 
+                                            type="monotone"
+                                            dataKey="total_milk"
+                                            stroke="#4CAF50"
+                                            fill="#4CAF50"
                                             fillOpacity={0.3}
                                             name="Total Susu"
                                         />
-                                        <Area 
+                                        <Area
                                             yAxisId="right"
-                                            type="monotone" 
-                                            dataKey="total_income" 
-                                            stroke="#2196F3" 
-                                            fill="#2196F3" 
+                                            type="monotone"
+                                            dataKey="total_income"
+                                            stroke="#2196F3"
+                                            fill="#2196F3"
                                             fillOpacity={0.3}
                                             name="Pendapatan"
                                         />
@@ -380,7 +384,7 @@ export default function DashboardHome() {
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 {financialSummary.map((item, index) => (
                     <Grid item xs={12} sm={6} md={3} key={index}>
-                        <Card sx={{ 
+                        <Card sx={{
                             borderLeft: `4px solid ${item.color}`,
                             height: '100%'
                         }}>
@@ -421,7 +425,7 @@ export default function DashboardHome() {
                                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                         <XAxis dataKey="month" />
                                         <YAxis />
-                                        <RechartsTooltip 
+                                        <RechartsTooltip
                                             formatter={(value: any, name: any) => [
                                                 formatRupiah(value),
                                                 name === 'income' ? 'Pemasukan' :
@@ -475,6 +479,35 @@ export default function DashboardHome() {
                     </Card>
                 </Grid>
 
+                {/* Recent Shipments */}
+                <Grid item xs={12} md={6}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                                Pengiriman Terbaru
+                            </Typography>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Tanggal</TableCell>
+                                        <TableCell>Tujuan</TableCell>
+                                        <TableCell align="right">Jumlah (L)</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {(recentShipments ?? []).slice(0, 5).map((row: any) => (
+                                        <TableRow key={row.id} hover>
+                                            <TableCell>{dayjs(row.date).format('DD/MM/YYYY')}</TableCell>
+                                            <TableCell>{row.destination}</TableCell>
+                                            <TableCell align="right">{formatNumber(row.amount)}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
                 {/* Recent Attendances */}
                 <Grid item xs={12} md={6}>
                     <Card>
@@ -496,7 +529,7 @@ export default function DashboardHome() {
                                             <TableCell>{dayjs(row.date).format('DD/MM/YYYY')}</TableCell>
                                             <TableCell>{row.employee_name}</TableCell>
                                             <TableCell>
-                                                <Chip 
+                                                <Chip
                                                     label={row.status === 'hadir' ? 'Hadir' : row.status === 'ijin' ? 'Ijin' : row.status === 'sakit' ? 'Sakit' : 'Libur'}
                                                     color={row.status === 'hadir' ? 'success' : row.status === 'ijin' ? 'error' : row.status === 'sakit' ? 'warning' : 'info'}
                                                     size="small"
