@@ -100,11 +100,6 @@ export default function MonthlyReportPage() {
 		doc.text(`Total Pengiriman: ${reportData.summary.totalShipment} L`, margin, yPosition);
 		yPosition += 10;
 
-		doc.setFontSize(14);
-		(doc as any).setFont('helvetica', 'bold');
-		doc.text(`PENDAPATAN BERSIH: ${formatCurrency(reportData.summary.netIncome)}`, margin, yPosition);
-		yPosition += 20;
-
 		// Milk Collections Table
 		if (reportData.milkCollections.summary.length > 0) {
 			doc.setFontSize(16);
@@ -412,16 +407,6 @@ export default function MonthlyReportPage() {
 							<Grid item xs={12} sm={6} md={3}>
 								<Card sx={{ bgcolor: 'warning.light', color: 'white' }}>
 									<CardContent>
-										<Typography variant="h6" gutterBottom>Pendapatan Bersih</Typography>
-										<Typography variant="h4" fontWeight="bold">
-											{formatCurrency(reportData.summary.netIncome)}
-										</Typography>
-									</CardContent>
-								</Card>
-							</Grid>
-							<Grid item xs={12} sm={6} md={3}>
-								<Card sx={{ bgcolor: 'info.light', color: 'white' }}>
-									<CardContent>
 										<Typography variant="h6" gutterBottom>Total Gaji</Typography>
 										<Typography variant="h4" fontWeight="bold">
 											{formatCurrency(reportData.summary.totalSalary)}
@@ -430,7 +415,7 @@ export default function MonthlyReportPage() {
 								</Card>
 							</Grid>
 							<Grid item xs={12} sm={6} md={3}>
-								<Card sx={{ bgcolor: 'secondary.light', color: 'white' }}>
+								<Card sx={{ bgcolor: 'info.light', color: 'white' }}>
 									<CardContent>
 										<Typography variant="h6" gutterBottom>Total Pemeliharaan</Typography>
 										<Typography variant="h4" fontWeight="bold">

@@ -204,8 +204,7 @@ router.get('/monthly', async (req, res) => {
           totalExpense: totalExpense,
           totalMaintenance: totalMaintenance,
           totalShipment: totalShipment,
-          totalSalary: totalSalary,
-          netIncome: netIncome
+          totalSalary: totalSalary
         }
       }
     });
