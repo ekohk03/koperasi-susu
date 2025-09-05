@@ -14,8 +14,6 @@ import {
 	TableCell, 
 	TableHead, 
 	TableRow, 
-	Paper,
-	Divider,
 	Alert,
 	Chip
 } from '@mui/material';
@@ -68,28 +66,27 @@ export default function MonthlyReportPage() {
 		const doc = new jsPDF();
 		const pageWidth = doc.internal.pageSize.width;
 		const margin = 20;
-		const contentWidth = pageWidth - (margin * 2);
 		let yPosition = margin;
 
 		// Header
 		doc.setFontSize(20);
-		doc.setFont('helvetica', 'bold');
+		(doc as any).setFont('helvetica', 'bold');
 		doc.text('LAPORAN BULANAN', pageWidth / 2, yPosition, { align: 'center' });
 		yPosition += 10;
 
 		doc.setFontSize(14);
-		doc.setFont('helvetica', 'normal');
+		(doc as any).setFont('helvetica', 'normal');
 		doc.text(`Banyu Makmur - ${reportData.period.monthName} ${reportData.period.year}`, pageWidth / 2, yPosition, { align: 'center' });
 		yPosition += 20;
 
 		// Summary Section
 		doc.setFontSize(16);
-		doc.setFont('helvetica', 'bold');
+		(doc as any).setFont('helvetica', 'bold');
 		doc.text('RINGKASAN KEUANGAN', margin, yPosition);
 		yPosition += 10;
 
 		doc.setFontSize(12);
-		doc.setFont('helvetica', 'normal');
+		(doc as any).setFont('helvetica', 'normal');
 		doc.text(`Total Pendapatan: ${formatCurrency(reportData.summary.totalIncome)}`, margin, yPosition);
 		yPosition += 7;
 		doc.text(`Nilai Susu: ${formatCurrency(reportData.summary.totalMilkValue)}`, margin, yPosition);
@@ -99,17 +96,19 @@ export default function MonthlyReportPage() {
 		doc.text(`Total Pemeliharaan: ${formatCurrency(reportData.summary.totalMaintenance)}`, margin, yPosition);
 		yPosition += 7;
 		doc.text(`Total Gaji: ${formatCurrency(reportData.summary.totalSalary)}`, margin, yPosition);
+		yPosition += 7;
+		doc.text(`Total Pengiriman: ${reportData.summary.totalShipment} L`, margin, yPosition);
 		yPosition += 10;
 
 		doc.setFontSize(14);
-		doc.setFont('helvetica', 'bold');
+		(doc as any).setFont('helvetica', 'bold');
 		doc.text(`PENDAPATAN BERSIH: ${formatCurrency(reportData.summary.netIncome)}`, margin, yPosition);
 		yPosition += 20;
 
 		// Milk Collections Table
 		if (reportData.milkCollections.summary.length > 0) {
 			doc.setFontSize(16);
-			doc.setFont('helvetica', 'bold');
+			(doc as any).setFont('helvetica', 'bold');
 			doc.text('KOLEKSI SUSU', margin, yPosition);
 			yPosition += 10;
 
@@ -133,10 +132,36 @@ export default function MonthlyReportPage() {
 			yPosition = (doc as any).lastAutoTable.finalY + 10;
 		}
 
+		// Shipments Table
+		if (reportData.shipments.items.length > 0) {
+			doc.setFontSize(16);
+			(doc as any).setFont('helvetica', 'bold');
+			doc.text('PENGIRIMAN SUSU', margin, yPosition);
+			yPosition += 10;
+
+			const shipmentsData = reportData.shipments.items.map((item: any) => [
+				dayjs(item.date).format('DD/MM/YYYY'),
+				`${item.total_amount} L`,
+				item.destination,
+				item.notes
+			]);
+
+			(doc as any).autoTable({
+				startY: yPosition,
+				head: [['Tanggal', 'Jumlah (L)', 'Tujuan', 'Keterangan']],
+				body: shipmentsData,
+				theme: 'grid',
+				headStyles: { fillColor: [41, 128, 185] },
+				margin: { left: margin, right: margin }
+			});
+
+			yPosition = (doc as any).lastAutoTable.finalY + 10;
+		}
+
 		// Attendance Table
 		if (reportData.attendance.length > 0) {
 			doc.setFontSize(16);
-			doc.setFont('helvetica', 'bold');
+			(doc as any).setFont('helvetica', 'bold');
 			doc.text('ABSENSI KARYAWAN', margin, yPosition);
 			yPosition += 10;
 
@@ -165,7 +190,7 @@ export default function MonthlyReportPage() {
 		// Salaries Table
 		if (reportData.salaries.length > 0) {
 			doc.setFontSize(16);
-			doc.setFont('helvetica', 'bold');
+			(doc as any).setFont('helvetica', 'bold');
 			doc.text('GAJI KARYAWAN', margin, yPosition);
 			yPosition += 10;
 
@@ -174,12 +199,14 @@ export default function MonthlyReportPage() {
 				item.employee_position,
 				formatCurrency(item.base_salary),
 				item.total_working_days,
+				formatCurrency(item.deductions),
+				formatCurrency(item.bonuses),
 				formatCurrency(item.final_salary)
 			]);
 
 			(doc as any).autoTable({
 				startY: yPosition,
-				head: [['Nama', 'Posisi', 'Gaji Pokok', 'Hari Kerja', 'Gaji Akhir']],
+				head: [['Nama', 'Posisi', 'Gaji Pokok', 'Hari Kerja', 'Potongan', 'Bonus', 'Gaji Akhir']],
 				body: salariesData,
 				theme: 'grid',
 				headStyles: { fillColor: [41, 128, 185] },
@@ -192,7 +219,7 @@ export default function MonthlyReportPage() {
 		// Incomes Table
 		if (reportData.incomes.items.length > 0) {
 			doc.setFontSize(16);
-			doc.setFont('helvetica', 'bold');
+			(doc as any).setFont('helvetica', 'bold');
 			doc.text('PENDAPATAN', margin, yPosition);
 			yPosition += 10;
 
@@ -218,7 +245,7 @@ export default function MonthlyReportPage() {
 		// Expenses Table
 		if (reportData.expenses.items.length > 0) {
 			doc.setFontSize(16);
-			doc.setFont('helvetica', 'bold');
+			(doc as any).setFont('helvetica', 'bold');
 			doc.text('PENGELUARAN', margin, yPosition);
 			yPosition += 10;
 
@@ -241,12 +268,38 @@ export default function MonthlyReportPage() {
 			yPosition = (doc as any).lastAutoTable.finalY + 10;
 		}
 
+		// Maintenances
+		if (reportData.maintenances.items.length > 0) {
+			doc.setFontSize(16);
+			(doc as any).setFont('helvetica', 'bold');
+			doc.text('Pemeliharaan', margin, yPosition);
+			yPosition += 10;
+
+			const maintenancesData = reportData.maintenances.items.map((item: any) => [
+				item.item_name,
+				`${dayjs(item.start_date).format('DD/MM/YYYY')} - ${dayjs(item.end_date).format('DD/MM/YYYY')}`,
+				formatCurrency(item.cost),
+				item.description
+			]);
+
+			(doc as any).autoTable({
+				startY: yPosition,
+				head: [['Item', 'Periode', 'Biaya', 'Keterangan']],
+				body: maintenancesData,
+				theme: 'grid',
+				headStyles: { fillColor: [41, 128, 185] },
+				margin: { left: margin, right: margin }
+			});
+
+			yPosition = (doc as any).lastAutoTable.finalY + 10;
+		}
+
 		// Footer
 		const totalPages = doc.getNumberOfPages();
 		for (let i = 1; i <= totalPages; i++) {
 			doc.setPage(i);
 			doc.setFontSize(10);
-			doc.setFont('helvetica', 'normal');
+			(doc as any).setFont('helvetica', 'normal');
 			doc.text(`Halaman ${i} dari ${totalPages}`, pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
 		}
 
@@ -386,6 +439,16 @@ export default function MonthlyReportPage() {
 									</CardContent>
 								</Card>
 							</Grid>
+							<Grid item xs={12} sm={6} md={3}>
+								<Card sx={{ bgcolor: 'primary.light', color: 'white' }}>
+									<CardContent>
+										<Typography variant="h6" gutterBottom>Total Pengiriman</Typography>
+										<Typography variant="h4" fontWeight="bold">
+											{reportData.summary.totalShipment} L
+										</Typography>
+									</CardContent>
+								</Card>
+							</Grid>
 						</Grid>
 					</Grid>
 
@@ -424,6 +487,47 @@ export default function MonthlyReportPage() {
 												<TableCell align="right"><strong>{formatCurrency(reportData.milkCollections.total.avg_price)}</strong></TableCell>
 												<TableCell align="right"><strong>{formatCurrency(reportData.milkCollections.total.total_value)}</strong></TableCell>
 												<TableCell align="right"><strong>{reportData.milkCollections.total.total_days} hari</strong></TableCell>
+											</TableRow>
+										</TableBody>
+									</Table>
+								</CardContent>
+							</Card>
+						</Grid>
+					)}
+					
+					{/* Shipments */}
+					{reportData.shipments.items.length > 0 && (
+						<Grid item xs={12}>
+							<Card>
+								<CardContent>
+									<Typography variant="h6" gutterBottom>
+										<Assessment sx={{ mr: 1, verticalAlign: 'middle' }} />
+										Pengiriman Susu - {reportData.period.monthName} {reportData.period.year}
+									</Typography>
+									<Table>
+										<TableHead>
+											<TableRow>
+												<TableCell>Tanggal</TableCell>
+												<TableCell align="right">Jumlah (L)</TableCell>
+												<TableCell>Tujuan</TableCell>
+												<TableCell>Keterangan</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											{reportData.shipments.items.map((item: any, index: number) => (
+												<TableRow key={index} hover>
+													<TableCell>{dayjs(item.date).format('DD/MM/YYYY')}</TableCell>
+													<TableCell align="right">{item.total_amount} L</TableCell>
+													<TableCell>{item.destination}</TableCell>
+													<TableCell>{item.notes}</TableCell>
+												</TableRow>
+											))}
+											<TableRow sx={{ bgcolor: 'grey.50' }}>
+												<TableCell><strong>TOTAL PENGIRIMAN</strong></TableCell>
+												<TableCell align="right">
+													<strong>{reportData.shipments.total} L</strong>
+												</TableCell>
+												<TableCell colSpan={2}></TableCell>
 											</TableRow>
 										</TableBody>
 									</Table>
