@@ -1,4 +1,4 @@
-import { Add, Visibility } from '@mui/icons-material';
+import { Add, Visibility, Edit, Delete, Download } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Chip, Divider } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -85,6 +85,35 @@ export default function EmployeesPage() {
 		}
 	};
 
+	const handleDownloadEmployee = async () => {
+		if (!selectedEmployee) return;
+		
+		try {
+			// Test route first
+			console.log('Testing export route...');
+			const testResponse = await axios.get(`/api/attendances/test-export?employee_id=${selectedEmployee.id}`);
+			console.log('Test response:', testResponse.data);
+			
+			// If test works, try actual export
+			const response = await axios.get(`/api/attendances/export/excel?employee_id=${selectedEmployee.id}`, {
+				responseType: 'blob'
+			});
+			
+			// Create blob link to download
+			const url = window.URL.createObjectURL(new Blob([response.data]));
+			const link = document.createElement('a');
+			link.href = url;
+			link.setAttribute('download', `absensi-${selectedEmployee.name}-${new Date().toISOString().split('T')[0]}.xlsx`);
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			window.URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error('Download error:', error);
+			alert('Gagal mengunduh file: ' + (error.response?.data?.message || error.message || 'Unknown error'));
+		}
+	};
+
 	return (
 		<Grid container spacing={3}>
 			<Grid item xs={12}>
@@ -105,7 +134,7 @@ export default function EmployeesPage() {
 									<TableCell>Gabung</TableCell>
 									<TableCell>Telepon</TableCell>
 									<TableCell>Alamat</TableCell>
-									<TableCell align="right">Aksi</TableCell>
+									<TableCell align="center">Aksi</TableCell>
 								</TableRow>
 							</TableHead>
 							<TableBody>
@@ -122,16 +151,28 @@ export default function EmployeesPage() {
 										<TableCell>{new Date(row.join_date).toLocaleDateString('id-ID')}</TableCell>
 										<TableCell>{row.phone}</TableCell>
 										<TableCell>{row.address}</TableCell>
-										<TableCell align="right">
+										<TableCell align="center">
 											<IconButton 
 												size="small" 
 												onClick={(e) => { e.stopPropagation(); openDetail(row); }}
-												color="primary"
+												color="success"
 											>
 												<Visibility />
 											</IconButton>
-											<Button size="small" onClick={(e) => { e.stopPropagation(); openEdit(row); }}>Edit</Button>
-											<Button size="small" color="error" onClick={(e) => { e.stopPropagation(); remove(row.id); }}>Hapus</Button>
+											<IconButton 
+												size="small" 
+												onClick={(e) => { e.stopPropagation(); openEdit(row); }}
+												color="primary"
+											>
+												<Edit />
+											</IconButton>
+											<IconButton 
+												size="small" 
+												onClick={(e) => { e.stopPropagation(); remove(row.id); }}
+												color="error"
+											>
+												<Delete />
+											</IconButton>
 										</TableCell>
 									</TableRow>
 								))}
@@ -192,7 +233,7 @@ export default function EmployeesPage() {
 			</Dialog>
 
 			{/* Detail Dialog */}
-			<Dialog open={detailOpen} onClose={() => setDetailOpen(false)} fullWidth maxWidth="lg">
+			<Dialog open={detailOpen} onClose={() => setDetailOpen(false)} fullWidth maxWidth="md">
 				<DialogTitle>
 					Detail Karyawan
 					{selectedEmployee && (
@@ -275,6 +316,12 @@ export default function EmployeesPage() {
 												{employeeDetail.summary.holiday_days} hari
 											</Typography>
 										</Grid>
+										<Grid item xs={6} sm={3}>
+											<Typography variant="body2" color="text.secondary">Sakit</Typography>
+											<Typography variant="h6" color="orange" fontWeight={700}>
+												{employeeDetail.summary.sick_days} hari
+											</Typography>
+										</Grid>
 										<Grid item xs={12}>
 											<Typography variant="body2" color="text.secondary">Tingkat Kehadiran</Typography>
 											<Typography variant="h6" color="primary" fontWeight={700}>
@@ -353,15 +400,14 @@ export default function EmployeesPage() {
 				<DialogActions>
 					<Button onClick={() => setDetailOpen(false)}>Tutup</Button>
 					{selectedEmployee && (
-						<Button 
-							variant="contained" 
-							onClick={() => {
-								setForm(selectedEmployee);
-								setDetailOpen(false);
-								setEditOpen(true);
-							}}
+						<Button
+							variant="contained"
+							startIcon={<Download />}
+							onClick={handleDownloadEmployee}
+							color="primary"
+							disabled={!selectedEmployee}
 						>
-							Edit Karyawan
+							Download
 						</Button>
 					)}
 				</DialogActions>

@@ -71,6 +71,7 @@ router.get('/:id/detail', async (req, res) => {
     const presentDays = attendances.filter(item => item.status === 'hadir').length;
     const absentDays = attendances.filter(item => item.status === 'ijin').length;
     const holidayDays = attendances.filter(item => item.status === 'libur').length;
+    const sickDays = attendances.filter(item => item.status === 'sakit').length;
     const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 0;
 
     res.json({
@@ -83,7 +84,8 @@ router.get('/:id/detail', async (req, res) => {
           present_days: presentDays,
           absent_days: absentDays,
           holiday_days: holidayDays,
-          attendance_rate: attendanceRate
+          attendance_rate: attendanceRate,
+          sick_days: sickDays
         }
       }
     });

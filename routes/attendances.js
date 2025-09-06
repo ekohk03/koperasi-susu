@@ -1,5 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const ExcelJS = require('exceljs');
+const moment = require('moment');
 const db = require('../config/database');
 const auth = require('../middleware/auth');
 
@@ -109,6 +111,114 @@ router.get('/salaries', async (req, res) => {
     });
   } catch (error) {
     console.error('Get salaries error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
+// @route   GET /api/attendances/test-export
+// @desc    Test export route
+// @access  Private
+router.get('/test-export', async (req, res) => {
+  try {
+    console.log('Test export route hit');
+    res.json({ 
+      success: true, 
+      message: 'Export route is working',
+      params: req.query 
+    });
+  } catch (error) {
+    console.error('Test export error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error' 
+    });
+  }
+});
+
+// @route   GET /api/attendances/export/excel
+// @desc    Export attendances to Excel
+// @access  Private
+router.get('/export/excel', async (req, res) => {
+  try {
+    console.log('Export Excel route hit with params:', req.query);
+    const { start_date, end_date, employee_id, status } = req.query;
+    
+    let query = `
+      SELECT 
+        ea.date,
+        e.name as employee_name,
+        e.position as employee_position,
+        ea.status,
+        ea.notes
+      FROM employee_attendances ea
+      JOIN employees e ON ea.employee_id = e.id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    
+    if (start_date) {
+      query += ' AND ea.date >= ?';
+      params.push(start_date);
+    }
+    
+    if (end_date) {
+      query += ' AND ea.date <= ?';
+      params.push(end_date);
+    }
+    
+    if (employee_id) {
+      query += ' AND ea.employee_id = ?';
+      params.push(employee_id);
+    }
+    
+    if (status) {
+      query += ' AND ea.status = ?';
+      params.push(status);
+    }
+    
+    query += ' ORDER BY ea.date DESC, e.name ASC';
+
+    const [attendances] = await db.promise().query(query, params);
+
+    // Create Excel workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Absensi Karyawan');
+
+    // Add headers
+    worksheet.columns = [
+      { header: 'Tanggal', key: 'date', width: 15 },
+      { header: 'Nama Karyawan', key: 'employee_name', width: 25 },
+      { header: 'Posisi', key: 'employee_position', width: 20 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Catatan', key: 'notes', width: 30 }
+    ];
+
+    // Add data
+    attendances.forEach(attendance => {
+      worksheet.addRow({
+        date: moment(attendance.date).format('DD/MM/YYYY'),
+        employee_name: attendance.employee_name,
+        employee_position: attendance.employee_position,
+        status: attendance.status,
+        notes: attendance.notes || ''
+      });
+    });
+
+    // Style headers
+    worksheet.getRow(1).font = { bold: true };
+
+    const filename = `absensi-karyawan-${moment().format('YYYYMMDD-HHmmss')}.xlsx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error('Export attendances error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Server error' 

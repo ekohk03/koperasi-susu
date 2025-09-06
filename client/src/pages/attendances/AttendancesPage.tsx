@@ -191,16 +191,7 @@ export default function AttendancesPage() {
 				<Grid container spacing={3}>
 					<Grid item xs={12}>
 						<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-							<TextField size="small" type="date" label="Mulai" InputLabelProps={{ shrink: true }} value={filters.start_date} onChange={(e) => setFilters({ ...filters, start_date: e.target.value })} />
-							<TextField size="small" type="date" label="Selesai" InputLabelProps={{ shrink: true }} value={filters.end_date} onChange={(e) => setFilters({ ...filters, end_date: e.target.value })} />
-							<Select size="small" value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} displayEmpty>
-								<MenuItem value="">Semua Status</MenuItem>
-								<MenuItem value="hadir">Hadir</MenuItem>
-								<MenuItem value="ijin">Ijin</MenuItem>
-								<MenuItem value="libur">Libur</MenuItem>
-								<MenuItem value="sakit">Sakit</MenuItem>
-							</Select>
-							<Button variant="outlined" onClick={() => refetch()}>Filter</Button>
+							{/* Filter dihapus */}
 						</Box>
 					</Grid>
 
@@ -382,7 +373,7 @@ export default function AttendancesPage() {
 								inputProps={{ min: 2020, max: 2030 }}
 								sx={{ width: 100 }}
 							/>
-							<Button variant="outlined" onClick={() => refetchSalaries()}>Refresh</Button>
+							{/* <Button variant="outlined" onClick={() => refetchSalaries()}>Refresh</Button> */}
 						</Box>
 					</Grid>
 					

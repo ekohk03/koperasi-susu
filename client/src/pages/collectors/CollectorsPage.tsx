@@ -1,4 +1,4 @@
-import { Add, Visibility, Download } from '@mui/icons-material';
+import { Add, Visibility, Download, Edit, Delete } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Chip, Divider } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -90,7 +90,7 @@ export default function CollectorsPage() {
 									<TableCell>Nama</TableCell>
 									<TableCell>Alamat</TableCell>
 									<TableCell>Telepon</TableCell>
-									<TableCell align="right">Aksi</TableCell>
+									<TableCell align="center">Aksi</TableCell>
 								</TableRow>
 							</TableHead>
 							<TableBody>
@@ -104,16 +104,28 @@ export default function CollectorsPage() {
 										<TableCell>{row.name}</TableCell>
 										<TableCell>{row.address}</TableCell>
 										<TableCell>{row.phone}</TableCell>
-										<TableCell align="right">
+										<TableCell align="center">
 											<IconButton 
 												size="small" 
 												onClick={(e) => { e.stopPropagation(); openDetail(row); }}
-												color="primary"
+												color="success"
 											>
 												<Visibility />
 											</IconButton>
-											<Button size="small" onClick={(e) => { e.stopPropagation(); openEdit(row); }}>Edit</Button>
-											<Button size="small" color="error" onClick={(e) => { e.stopPropagation(); remove(row.id); }}>Hapus</Button>
+											<IconButton 
+												size="small" 
+												onClick={(e) => { e.stopPropagation(); openEdit(row); }}
+												color="primary"
+											>
+												<Edit />
+											</IconButton>
+											<IconButton 
+												size="small" 
+												onClick={(e) => { e.stopPropagation(); remove(row.id); }}
+												color="error"
+											>
+												<Delete />
+											</IconButton>
 										</TableCell>
 									</TableRow>
 								))}

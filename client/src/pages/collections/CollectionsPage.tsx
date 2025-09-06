@@ -1,5 +1,5 @@
-import { Add, Delete, Download } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Alert, Chip } from '@mui/material';
+import { Add, Delete, Download, Edit } from '@mui/icons-material';
+import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Alert, Chip, IconButton } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -22,8 +22,12 @@ export default function CollectionsPage() {
 	// Dialog tambah koleksi
 	const [open, setOpen] = useState(false);
 	const [collectors, setCollectors] = useState<any[]>([]);
-	const [form, setForm] = useState<any>({ collector_id: '', morning_amount: '', afternoon_amount: '', date: dayjs().format('YYYY-MM-DD') });
-	const [activePrice, setActivePrice] = useState<number>(0);
+	const [form, setForm] = useState<any>({ collector_id: '', morning_amount: '', afternoon_amount: '', date: dayjs().format('YYYY-MM-DD'), price_per_liter: '' });
+
+	// Dialog edit koleksi
+	const [editOpen, setEditOpen] = useState(false);
+	const [editForm, setEditForm] = useState<any>({ id: '', collector_id: '', morning_amount: '', afternoon_amount: '', date: '', price_per_liter: '' });
+	const [editingCollection, setEditingCollection] = useState<any>(null);
 
 	// Dialog hapus per bulan
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -53,19 +57,13 @@ export default function CollectionsPage() {
 	}, []);
 
 	const openCreate = async () => {
-		setForm({ collector_id: '', morning_amount: '', afternoon_amount: '', date: dayjs().format('YYYY-MM-DD') });
+		setForm({ collector_id: '', morning_amount: '', afternoon_amount: '', date: dayjs().format('YYYY-MM-DD'), price_per_liter: '' });
 		if (!collectors.length) {
 			await loadCollectors();
 		}
 		setOpen(true);
 	};
 
-	useEffect(() => {
-		if (!open) return;
-		axios.get('/api/prices/active', { params: { date: form.date } }).then(res => {
-			setActivePrice(res.data.data?.price_per_liter ?? 0);
-		});
-	}, [open, form.date]);
 
 	const save = async () => {
 		try {
@@ -73,7 +71,8 @@ export default function CollectionsPage() {
 				collector_id: Number(form.collector_id),
 				morning_amount: Number(form.morning_amount || 0),
 				afternoon_amount: Number(form.afternoon_amount || 0),
-				date: form.date
+				date: form.date,
+				price_per_liter: Number(form.price_per_liter || 0)
 			});
 			alert('Berhasil menambahkan koleksi susu!');
 			setOpen(false);
@@ -81,6 +80,55 @@ export default function CollectionsPage() {
 		} catch (err: any) {
 			console.error('Save error:', err);
 			alert('Gagal menyimpan: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+		}
+	};
+
+	const openEdit = async (collection: any) => {
+		setEditingCollection(collection);
+		setEditForm({
+			id: collection.id,
+			collector_id: collection.collector_id,
+			morning_amount: collection.morning_amount,
+			afternoon_amount: collection.afternoon_amount,
+			date: collection.date,
+			price_per_liter: collection.price_per_liter
+		});
+		if (!collectors.length) {
+			await loadCollectors();
+		}
+		setEditOpen(true);
+	};
+
+	const saveEdit = async () => {
+		try {
+			await axios.put(`/api/collections/${editForm.id}`, {
+				collector_id: Number(editForm.collector_id),
+				morning_amount: Number(editForm.morning_amount || 0),
+				afternoon_amount: Number(editForm.afternoon_amount || 0),
+				date: editForm.date,
+				price_per_liter: Number(editForm.price_per_liter)
+			});
+			alert('Berhasil mengupdate koleksi susu!');
+			setEditOpen(false);
+			queryClient.invalidateQueries({ queryKey: ['collections'] });
+		} catch (err: any) {
+			console.error('Update error:', err);
+			alert('Gagal mengupdate: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+		}
+	};
+
+	const deleteCollection = async (id: number) => {
+		if (!confirm('Anda yakin ingin menghapus data koleksi susu ini?')) {
+			return;
+		}
+
+		try {
+			await axios.delete(`/api/collections/${id}`);
+			alert('Berhasil menghapus koleksi susu!');
+			queryClient.invalidateQueries({ queryKey: ['collections'] });
+		} catch (err: any) {
+			console.error('Delete error:', err);
+			alert('Gagal menghapus: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
 		}
 	};
 
@@ -128,7 +176,7 @@ export default function CollectionsPage() {
 					<Box sx={{ display: 'flex', gap: 1 }}>
 						<TextField type="date" label="Mulai" InputLabelProps={{ shrink: true }} size="small" value={filters.start_date} onChange={(e) => setFilters({ ...filters, start_date: e.target.value })} />
 						<TextField type="date" label="Selesai" InputLabelProps={{ shrink: true }} size="small" value={filters.end_date} onChange={(e) => setFilters({ ...filters, end_date: e.target.value })} />
-						<Button variant="outlined" startIcon={<Download />} onClick={doExport}>Export</Button>
+						<Button variant="outlined" startIcon={<Download />} onClick={doExport}>Download</Button>
 						<Button variant="contained" startIcon={<Add />} onClick={openCreate}>Tambah</Button>
 						<Button variant="outlined" color="error" startIcon={<Delete />} onClick={openDeleteDialog}>Hapus Per Bulan</Button>
 					</Box>
@@ -147,6 +195,7 @@ export default function CollectionsPage() {
 									<TableCell align="right">Total (L)</TableCell>
 									<TableCell align="right">Harga/L</TableCell>
 									<TableCell align="right">Pendapatan</TableCell>
+									<TableCell align="center">Aksi</TableCell>
 								</TableRow>
 							</TableHead>
 							<TableBody>
@@ -159,6 +208,14 @@ export default function CollectionsPage() {
 										<TableCell align="right">{formatNumber(row.total_amount)}</TableCell>
 										<TableCell align="right">{formatRupiah(row.price_per_liter)}</TableCell>
 										<TableCell align="right">{formatRupiah(row.total_income)}</TableCell>
+										<TableCell align="center">
+											<IconButton size="small" onClick={() => openEdit(row)} color="primary">
+												<Edit />
+											</IconButton>
+											<IconButton size="small" onClick={() => deleteCollection(row.id)} color="error">
+												<Delete />
+											</IconButton>
+										</TableCell>
 									</TableRow>
 								))}
 							</TableBody>
@@ -179,13 +236,66 @@ export default function CollectionsPage() {
 					<TextField label="Tanggal" type="date" InputLabelProps={{ shrink: true }} fullWidth margin="normal" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
 					<TextField label="Jumlah Pagi (L)" type="number" fullWidth margin="normal" value={form.morning_amount} onChange={(e) => setForm({ ...form, morning_amount: e.target.value })} />
 					<TextField label="Jumlah Sore (L)" type="number" fullWidth margin="normal" value={form.afternoon_amount} onChange={(e) => setForm({ ...form, afternoon_amount: e.target.value })} />
-					<Box sx={{ mt: 1 }}>
-						<Typography variant="body2">Harga per Liter aktif: {formatRupiah(activePrice)}</Typography>
-					</Box>
+					<TextField label="Harga per Liter (Rp)" type="number" fullWidth margin="normal" value={form.price_per_liter} onChange={(e) => setForm({ ...form, price_per_liter: e.target.value })} />
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setOpen(false)}>Batal</Button>
 					<Button variant="contained" onClick={save} disabled={(Number(form.morning_amount || 0) <= 0) && (Number(form.afternoon_amount || 0) <= 0)}>Simpan</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Dialog Edit Koleksi */}
+			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm">
+				<DialogTitle>Edit Koleksi Susu</DialogTitle>
+				<DialogContent>
+					<Alert severity="info" sx={{ mb: 2 }}>
+						<strong>Info:</strong> Anda hanya dapat mengedit data yang sama (pagi atau sore) sesuai dengan data sebelumnya.
+					</Alert>
+					<Select fullWidth value={editForm.collector_id} onChange={(e) => setEditForm({ ...editForm, collector_id: e.target.value })} sx={{ mt: 2 }} displayEmpty>
+						<MenuItem value="" disabled>Pilih Pengepul</MenuItem>
+						{collectors.map((c) => (
+							<MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
+						))}
+					</Select>
+					<TextField label="Tanggal" type="date" InputLabelProps={{ shrink: true }} fullWidth margin="normal" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} />
+					<TextField 
+						label="Jumlah Pagi (L)" 
+						type="number" 
+						fullWidth 
+						margin="normal" 
+						value={editForm.morning_amount} 
+						onChange={(e) => setEditForm({ ...editForm, morning_amount: e.target.value })}
+						disabled={editingCollection?.morning_amount === 0}
+						helperText={editingCollection?.morning_amount === 0 ? "Data pagi tidak tersedia untuk record ini" : ""}
+					/>
+					<TextField 
+						label="Jumlah Sore (L)" 
+						type="number" 
+						fullWidth 
+						margin="normal" 
+						value={editForm.afternoon_amount} 
+						onChange={(e) => setEditForm({ ...editForm, afternoon_amount: e.target.value })}
+						disabled={editingCollection?.afternoon_amount === 0}
+						helperText={editingCollection?.afternoon_amount === 0 ? "Data sore tidak tersedia untuk record ini" : ""}
+					/>
+					<TextField 
+						label="Harga per Liter" 
+						type="number" 
+						fullWidth 
+						margin="normal" 
+						value={editForm.price_per_liter} 
+						onChange={(e) => setEditForm({ ...editForm, price_per_liter: e.target.value })}
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setEditOpen(false)}>Batal</Button>
+					<Button 
+						variant="contained" 
+						onClick={saveEdit} 
+						disabled={(Number(editForm.morning_amount || 0) <= 0) && (Number(editForm.afternoon_amount || 0) <= 0)}
+					>
+						Simpan
+					</Button>
 				</DialogActions>
 			</Dialog>
 

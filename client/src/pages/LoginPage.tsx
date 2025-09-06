@@ -29,6 +29,19 @@ export default function LoginPage() {
       <Card sx={{ width: '100%', boxShadow: 3, borderRadius: 3 }}>
         <CardContent>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="Logo Koperasi Susu"
+              sx={{ 
+                width: 80, 
+                height: 80, 
+                mx: 'auto', 
+                mb: 2,
+                display: 'block',
+                objectFit: 'contain'
+              }}
+            />
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
               Koperasi Susu
             </Typography>

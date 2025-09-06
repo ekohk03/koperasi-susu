@@ -236,9 +236,9 @@ router.put('/:id', [
     }
     const collectionId = req.params.id;
 
-    // Check if collection exists
+    // Check if collection exists and get current data
     const [existingCollection] = await db.promise().query(
-      'SELECT id FROM milk_collections WHERE id = ?',
+      'SELECT id, morning_amount, afternoon_amount FROM milk_collections WHERE id = ?',
       [collectionId]
     );
 
@@ -246,6 +246,40 @@ router.put('/:id', [
       return res.status(404).json({ 
         success: false, 
         message: 'Collection not found' 
+      });
+    }
+
+    const currentData = existingCollection[0];
+
+    // Validate that user can only edit the same time period (morning/afternoon) as the original data
+    // If original data has morning_amount > 0, user can only edit morning_amount
+    // If original data has afternoon_amount > 0, user can only edit afternoon_amount
+    if (currentData.morning_amount > 0 && morning_amount <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Data pagi sudah ada sebelumnya. Anda hanya dapat mengedit jumlah pagi, tidak dapat menghapusnya.' 
+      });
+    }
+
+    if (currentData.afternoon_amount > 0 && afternoon_amount <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Data sore sudah ada sebelumnya. Anda hanya dapat mengedit jumlah sore, tidak dapat menghapusnya.' 
+      });
+    }
+
+    // Prevent adding new time period data that wasn't in the original
+    if (currentData.morning_amount === 0 && morning_amount > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Data pagi tidak tersedia untuk record ini. Anda hanya dapat mengedit data sore.' 
+      });
+    }
+
+    if (currentData.afternoon_amount === 0 && afternoon_amount > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Data sore tidak tersedia untuk record ini. Anda hanya dapat mengedit data pagi.' 
       });
     }
 
