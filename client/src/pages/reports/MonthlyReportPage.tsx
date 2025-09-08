@@ -1,4 +1,4 @@
-import { Download, Visibility, Assessment } from '@mui/icons-material';
+import { Download, Assessment } from '@mui/icons-material';
 import { 
 	Box, 
 	Button, 
@@ -313,8 +313,9 @@ export default function MonthlyReportPage() {
 							startIcon={<Download />} 
 							onClick={exportToPDF}
 							disabled={!reportData}
+							color="primary"
 						>
-							Ekspor PDF
+							Download
 						</Button>
 					</Box>
 				</Box>
@@ -353,16 +354,6 @@ export default function MonthlyReportPage() {
 										</MenuItem>
 									))}
 								</TextField>
-							</Grid>
-							<Grid item xs={12} sm={6} md={3}>
-								<Button 
-									variant="outlined" 
-									startIcon={<Visibility />}
-									onClick={() => refetch()}
-									fullWidth
-								>
-									Tampilkan
-								</Button>
 							</Grid>
 						</Grid>
 					</CardContent>

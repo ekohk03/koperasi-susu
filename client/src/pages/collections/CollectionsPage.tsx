@@ -21,13 +21,11 @@ export default function CollectionsPage() {
 
 	// Dialog tambah koleksi
 	const [open, setOpen] = useState(false);
+	const [editOpen, setEditOpen] = useState(false);
+	const [editingCollection, setEditingCollection] = useState<any>(null);
 	const [collectors, setCollectors] = useState<any[]>([]);
 	const [form, setForm] = useState<any>({ collector_id: '', morning_amount: '', afternoon_amount: '', date: dayjs().format('YYYY-MM-DD'), price_per_liter: '' });
-
-	// Dialog edit koleksi
-	const [editOpen, setEditOpen] = useState(false);
-	const [editForm, setEditForm] = useState<any>({ id: '', collector_id: '', morning_amount: '', afternoon_amount: '', date: '', price_per_liter: '' });
-	const [editingCollection, setEditingCollection] = useState<any>(null);
+	const [editForm, setEditForm] = useState<any>({ id: 0, morning_amount: '', afternoon_amount: '', price_per_liter: '' });
 
 	// Dialog hapus per bulan
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -72,7 +70,7 @@ export default function CollectionsPage() {
 				morning_amount: Number(form.morning_amount || 0),
 				afternoon_amount: Number(form.afternoon_amount || 0),
 				date: form.date,
-				price_per_liter: Number(form.price_per_liter || 0)
+				price_per_liter: Number(form.price_per_liter)
 			});
 			alert('Berhasil menambahkan koleksi susu!');
 			setOpen(false);
@@ -83,29 +81,22 @@ export default function CollectionsPage() {
 		}
 	};
 
-	const openEdit = async (collection: any) => {
-		setEditingCollection(collection);
+	const openEdit = (row: any) => {
+		setEditingCollection(row);
 		setEditForm({
-			id: collection.id,
-			collector_id: collection.collector_id,
-			morning_amount: collection.morning_amount,
-			afternoon_amount: collection.afternoon_amount,
-			date: collection.date,
-			price_per_liter: collection.price_per_liter
+			id: row.id,
+			morning_amount: row.morning_amount || '',
+			afternoon_amount: row.afternoon_amount || '',
+			price_per_liter: row.price_per_liter || ''
 		});
-		if (!collectors.length) {
-			await loadCollectors();
-		}
 		setEditOpen(true);
 	};
 
 	const saveEdit = async () => {
 		try {
 			await axios.put(`/api/collections/${editForm.id}`, {
-				collector_id: Number(editForm.collector_id),
 				morning_amount: Number(editForm.morning_amount || 0),
 				afternoon_amount: Number(editForm.afternoon_amount || 0),
-				date: editForm.date,
 				price_per_liter: Number(editForm.price_per_liter)
 			});
 			alert('Berhasil mengupdate koleksi susu!');
@@ -118,10 +109,7 @@ export default function CollectionsPage() {
 	};
 
 	const deleteCollection = async (id: number) => {
-		if (!confirm('Anda yakin ingin menghapus data koleksi susu ini?')) {
-			return;
-		}
-
+		if (!confirm('Hapus koleksi susu ini?')) return;
 		try {
 			await axios.delete(`/api/collections/${id}`);
 			alert('Berhasil menghapus koleksi susu!');
@@ -176,7 +164,7 @@ export default function CollectionsPage() {
 					<Box sx={{ display: 'flex', gap: 1 }}>
 						<TextField type="date" label="Mulai" InputLabelProps={{ shrink: true }} size="small" value={filters.start_date} onChange={(e) => setFilters({ ...filters, start_date: e.target.value })} />
 						<TextField type="date" label="Selesai" InputLabelProps={{ shrink: true }} size="small" value={filters.end_date} onChange={(e) => setFilters({ ...filters, end_date: e.target.value })} />
-						<Button variant="outlined" startIcon={<Download />} onClick={doExport}>Download</Button>
+						<Button variant="contained" startIcon={<Download />} onClick={doExport} color="primary">Download</Button>
 						<Button variant="contained" startIcon={<Add />} onClick={openCreate}>Tambah</Button>
 						<Button variant="outlined" color="error" startIcon={<Delete />} onClick={openDeleteDialog}>Hapus Per Bulan</Button>
 					</Box>
@@ -236,7 +224,7 @@ export default function CollectionsPage() {
 					<TextField label="Tanggal" type="date" InputLabelProps={{ shrink: true }} fullWidth margin="normal" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
 					<TextField label="Jumlah Pagi (L)" type="number" fullWidth margin="normal" value={form.morning_amount} onChange={(e) => setForm({ ...form, morning_amount: e.target.value })} />
 					<TextField label="Jumlah Sore (L)" type="number" fullWidth margin="normal" value={form.afternoon_amount} onChange={(e) => setForm({ ...form, afternoon_amount: e.target.value })} />
-					<TextField label="Harga per Liter (Rp)" type="number" fullWidth margin="normal" value={form.price_per_liter} onChange={(e) => setForm({ ...form, price_per_liter: e.target.value })} />
+					<TextField label="Harga per Liter" type="number" fullWidth margin="normal" value={form.price_per_liter} onChange={(e) => setForm({ ...form, price_per_liter: e.target.value })} />
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setOpen(false)}>Batal</Button>
@@ -248,54 +236,49 @@ export default function CollectionsPage() {
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm">
 				<DialogTitle>Edit Koleksi Susu</DialogTitle>
 				<DialogContent>
-					<Alert severity="info" sx={{ mb: 2 }}>
-						<strong>Info:</strong> Anda hanya dapat mengedit data yang sama (pagi atau sore) sesuai dengan data sebelumnya.
-					</Alert>
-					<Select fullWidth value={editForm.collector_id} onChange={(e) => setEditForm({ ...editForm, collector_id: e.target.value })} sx={{ mt: 2 }} displayEmpty>
-						<MenuItem value="" disabled>Pilih Pengepul</MenuItem>
-						{collectors.map((c) => (
-							<MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-						))}
-					</Select>
-					<TextField label="Tanggal" type="date" InputLabelProps={{ shrink: true }} fullWidth margin="normal" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} />
-					<TextField 
-						label="Jumlah Pagi (L)" 
-						type="number" 
-						fullWidth 
-						margin="normal" 
-						value={editForm.morning_amount} 
-						onChange={(e) => setEditForm({ ...editForm, morning_amount: e.target.value })}
-						disabled={editingCollection?.morning_amount === 0}
-						helperText={editingCollection?.morning_amount === 0 ? "Data pagi tidak tersedia untuk record ini" : ""}
-					/>
-					<TextField 
-						label="Jumlah Sore (L)" 
-						type="number" 
-						fullWidth 
-						margin="normal" 
-						value={editForm.afternoon_amount} 
-						onChange={(e) => setEditForm({ ...editForm, afternoon_amount: e.target.value })}
-						disabled={editingCollection?.afternoon_amount === 0}
-						helperText={editingCollection?.afternoon_amount === 0 ? "Data sore tidak tersedia untuk record ini" : ""}
-					/>
-					<TextField 
-						label="Harga per Liter" 
-						type="number" 
-						fullWidth 
-						margin="normal" 
-						value={editForm.price_per_liter} 
-						onChange={(e) => setEditForm({ ...editForm, price_per_liter: e.target.value })}
-					/>
+					{editingCollection && (
+						<>
+							<Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+								<Typography variant="body2" color="text.secondary">Tanggal: {dayjs(editingCollection.date).format('DD/MM/YYYY')}</Typography>
+								<Typography variant="body2" color="text.secondary">Pengepul: {editingCollection.collector_name}</Typography>
+							</Box>
+							
+							{editingCollection.morning_amount > 0 && (
+								<TextField 
+									label="Jumlah Pagi (L)" 
+									type="number" 
+									fullWidth 
+									margin="normal" 
+									value={editForm.morning_amount} 
+									onChange={(e) => setEditForm({ ...editForm, morning_amount: e.target.value })} 
+								/>
+							)}
+							
+							{editingCollection.afternoon_amount > 0 && (
+								<TextField 
+									label="Jumlah Sore (L)" 
+									type="number" 
+									fullWidth 
+									margin="normal" 
+									value={editForm.afternoon_amount} 
+									onChange={(e) => setEditForm({ ...editForm, afternoon_amount: e.target.value })} 
+								/>
+							)}
+							
+							<TextField 
+								label="Harga per Liter" 
+								type="number" 
+								fullWidth 
+								margin="normal" 
+								value={editForm.price_per_liter} 
+								onChange={(e) => setEditForm({ ...editForm, price_per_liter: e.target.value })} 
+							/>
+						</>
+					)}
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setEditOpen(false)}>Batal</Button>
-					<Button 
-						variant="contained" 
-						onClick={saveEdit} 
-						disabled={(Number(editForm.morning_amount || 0) <= 0) && (Number(editForm.afternoon_amount || 0) <= 0)}
-					>
-						Simpan
-					</Button>
+					<Button variant="contained" onClick={saveEdit}>Simpan</Button>
 				</DialogActions>
 			</Dialog>
 

@@ -53,7 +53,8 @@ router.get('/overview', async (req, res) => {
         COUNT(*) as total_attendance,
         COALESCE(SUM(CASE WHEN status = 'hadir' THEN 1 ELSE 0 END), 0) as present,
         COALESCE(SUM(CASE WHEN status = 'ijin' THEN 1 ELSE 0 END), 0) as 'leave',
-        COALESCE(SUM(CASE WHEN status = 'libur' THEN 1 ELSE 0 END), 0) as holiday
+        COALESCE(SUM(CASE WHEN status = 'libur' THEN 1 ELSE 0 END), 0) as holiday,
+        COALESCE(SUM(CASE WHEN status = 'sakit' THEN 1 ELSE 0 END), 0) as sick
       FROM employee_attendances 
       WHERE date = CURDATE()`
     );

@@ -89,7 +89,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', upload.single('proof_image'), [
   body('source').notEmpty().withMessage('Source is required'),
   body('amount').isFloat({ min: 0 }).withMessage('Amount must be a positive number'),
-  body('date').isDate().withMessage('Valid date is required')
+  body('date').isISO8601().withMessage('Valid date is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -130,10 +130,9 @@ router.post('/', upload.single('proof_image'), [
 // @route   PUT /api/incomes/:id
 // @desc    Update income
 // @access  Private
-router.put('/:id', [
+router.put('/:id', upload.single('proof_image'), [
   body('source').notEmpty().withMessage('Source is required'),
-  body('amount').isFloat({ min: 0 }).withMessage('Amount must be a positive number'),
-  body('date').isDate().withMessage('Valid date is required')
+  body('amount').isFloat({ min: 0 }).withMessage('Amount must be a positive number')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -144,12 +143,13 @@ router.put('/:id', [
       });
     }
 
-    const { source, amount, date, description } = req.body;
+    const { source, amount, description } = req.body;
+    const proof_image = req.file ? req.file.filename : null;
     const incomeId = req.params.id;
 
     // Check if income exists
     const [existingIncome] = await db.promise().query(
-      'SELECT id FROM incomes WHERE id = ?',
+      'SELECT id, proof_image FROM incomes WHERE id = ?',
       [incomeId]
     );
 
@@ -160,9 +160,12 @@ router.put('/:id', [
       });
     }
 
+    // If no new file uploaded, keep the existing proof_image
+    const finalProofImage = proof_image || existingIncome[0].proof_image;
+
     await db.promise().query(
-      'UPDATE incomes SET source = ?, amount = ?, date = ?, description = ? WHERE id = ?',
-      [source, amount, date, description, incomeId]
+      'UPDATE incomes SET source = ?, amount = ?, description = ?, proof_image = ? WHERE id = ?',
+      [source, amount, description, finalProofImage, incomeId]
     );
 
     const [updatedIncome] = await db.promise().query(

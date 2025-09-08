@@ -167,38 +167,34 @@ export default function AttendancesPage() {
 
 
 	return (
-		<Grid container spacing={3}>
-			<Grid item xs={12}>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-					<Typography variant="h5" fontWeight={700}>Absensi & Gaji Karyawan</Typography>
-					<Box sx={{ display: 'flex', gap: 1 }}>
-						<Button variant="contained" startIcon={<Add />} onClick={openCreate}>Tambah</Button>
-						<Button variant="outlined" color="error" startIcon={<Delete />} onClick={openDeleteDialog}>Hapus Per Bulan</Button>
-					</Box>
-				</Box>
-			</Grid>
-
-			<Grid item xs={12}>
-				<Paper sx={{ width: '100%' }}>
-					<Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
-						<Tab label="Absensi" />
-						<Tab label="Gaji" />
-					</Tabs>
-				</Paper>
-			</Grid>
-
-			<TabPanel value={tabValue} index={0}>
-				<Grid container spacing={3}>
-					<Grid item xs={12}>
-						<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-							{/* Filter dihapus */}
+		<Box sx={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+			<Grid container spacing={3} sx={{ flexShrink: 0 }}>
+				<Grid item xs={12}>
+					<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+						<Typography variant="h5" fontWeight={700}>Absensi & Gaji Karyawan</Typography>
+						<Box sx={{ display: 'flex', gap: 1 }}>
+							<Button variant="contained" startIcon={<Add />} onClick={openCreate}>Tambah</Button>
+							<Button variant="outlined" color="error" startIcon={<Delete />} onClick={openDeleteDialog}>Hapus Per Bulan</Button>
 						</Box>
-					</Grid>
+					</Box>
+				</Grid>
 
-					{/* Statistik Absensi */}
-					{attendanceStats && (
-						<Grid item xs={12}>
-							<Card>
+				<Grid item xs={12}>
+					<Paper sx={{ width: '100%' }}>
+						<Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
+							<Tab label="Absensi" />
+							<Tab label="Gaji" />
+						</Tabs>
+					</Paper>
+				</Grid>
+			</Grid>
+
+			<Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+				<TabPanel value={tabValue} index={0}>
+					<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+						{/* Statistik Absensi */}
+						{attendanceStats && (
+							<Card sx={{ mb: 2, flexShrink: 0 }}>
 								<CardContent>
 									<Typography variant="h6" gutterBottom>
 										Statistik Absensi - {new Date(selectedYear, selectedMonth - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
@@ -298,88 +294,100 @@ export default function AttendancesPage() {
 									</Grid>
 								</CardContent>
 							</Card>
-						</Grid>
-					)}
-					<Grid item xs={12}>
-						<Card>
-							<CardContent>
-								<Table>
-																			<TableHead>
+						)}
+						
+						{/* Tabel Absensi */}
+						<Card sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+							<CardContent sx={{ p: 0, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+								<Box sx={{ 
+									width: '100%', 
+									overflow: 'auto',
+									flexGrow: 1,
+									'&::-webkit-scrollbar': {
+										width: '8px',
+										height: '8px',
+									},
+									'&::-webkit-scrollbar-track': {
+										background: '#f1f1f1',
+										borderRadius: '4px',
+									},
+									'&::-webkit-scrollbar-thumb': {
+										background: '#c1c1c1',
+										borderRadius: '4px',
+										'&:hover': {
+											background: '#a8a8a8',
+										},
+									},
+								}}>
+									<Table size="small">
+										<TableHead sx={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'white' }}>
 											<TableRow>
-												<TableCell>Tanggal</TableCell>
-												<TableCell>Nama</TableCell>
-												<TableCell>Posisi</TableCell>
-												<TableCell>Status</TableCell>
-												<TableCell>Catatan</TableCell>
+												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Tanggal</TableCell>
+												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 150 }}>Nama</TableCell>
+												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Posisi</TableCell>
+												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 100 }}>Status</TableCell>
+												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 200 }}>Catatan</TableCell>
 											</TableRow>
 										</TableHead>
-									<TableBody>
-										{(data ?? []).map((row: any) => (
-											<TableRow key={row.id} hover>
-												<TableCell>{dayjs(row.date).format('DD/MM/YYYY')}</TableCell>
-												<TableCell>{row.employee_name}</TableCell>
-												<TableCell>{row.employee_position}</TableCell>
-												<TableCell>
-													<Chip 
-														label={row.status} 
-														color={
-															row.status === 'hadir' ? 'success' :
-															row.status === 'sakit' ? 'warning' :
-															row.status === 'ijin' ? 'error' : 'default'
-														}
-														size="small"
-													/>
-												</TableCell>
-												<TableCell>{row.notes}</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
+										<TableBody>
+											{(data ?? []).map((row: any) => (
+												<TableRow key={row.id} hover>
+													<TableCell>{dayjs(row.date).format('DD/MM/YYYY')}</TableCell>
+													<TableCell>{row.employee_name}</TableCell>
+													<TableCell>{row.employee_position}</TableCell>
+													<TableCell>
+														<Chip 
+															label={row.status} 
+															color={
+																row.status === 'hadir' ? 'success' :
+																row.status === 'sakit' ? 'warning' :
+																row.status === 'ijin' ? 'error' : 'default'
+															}
+															size="small"
+														/>
+													</TableCell>
+													<TableCell>{row.notes}</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</Box>
 							</CardContent>
 						</Card>
-					</Grid>
-				</Grid>
-			</TabPanel>
+					</Box>
+				</TabPanel>
 
-			<TabPanel value={tabValue} index={1}>
-				<Grid container spacing={3}>
-					<Grid item xs={12}>
-						<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-							<Typography variant="h6">Data Gaji Karyawan</Typography>
+				<TabPanel value={tabValue} index={1}>
+					<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+						{/* Filter Controls */}
+						<Box sx={{ mb: 2, flexShrink: 0 }}>
+							<Typography variant="h6" sx={{ mb: 1 }}>Data Gaji Karyawan</Typography>
+							<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+								<Typography variant="body2">Filter Periode:</Typography>
+								<TextField
+									label="Bulan"
+									type="number"
+									size="small"
+									value={selectedMonth}
+									onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+									inputProps={{ min: 1, max: 12 }}
+									sx={{ width: 100 }}
+								/>
+								<TextField
+									label="Tahun"
+									type="number"
+									size="small"
+									value={selectedYear}
+									onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+									inputProps={{ min: 2020, max: 2030 }}
+									sx={{ width: 100 }}
+								/>
+							</Box>
 						</Box>
-					</Grid>
-					
-
-					
-					{/* Filter Controls */}
-					<Grid item xs={12}>
-						<Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-							<Typography variant="body2">Filter Periode:</Typography>
-							<TextField
-								label="Bulan"
-								type="number"
-								size="small"
-								value={selectedMonth}
-								onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-								inputProps={{ min: 1, max: 12 }}
-								sx={{ width: 100 }}
-							/>
-							<TextField
-								label="Tahun"
-								type="number"
-								size="small"
-								value={selectedYear}
-								onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-								inputProps={{ min: 2020, max: 2030 }}
-								sx={{ width: 100 }}
-							/>
-							{/* <Button variant="outlined" onClick={() => refetchSalaries()}>Refresh</Button> */}
-						</Box>
-					</Grid>
-					
-					<Grid item xs={12}>
-						<Card>
-							<CardContent>
+						
+						{/* Tabel Gaji */}
+						<Card sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+							<CardContent sx={{ p: 0, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
 								{salariesLoading ? (
 									<Box sx={{ textAlign: 'center', py: 4 }}>
 										<Typography>Loading data gaji...</Typography>
@@ -389,88 +397,109 @@ export default function AttendancesPage() {
 										Error loading salaries: {salariesError?.message}
 									</Alert>
 								) : salaries && salaries.length > 0 ? (
-									<Table size="small">
-										<TableHead>
-											<TableRow>
-												<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Periode</TableCell>
-												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Nama Karyawan</TableCell>
-												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Posisi</TableCell>
-												<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Gaji Pokok</TableCell>
-												<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Hadir</TableCell>
-												<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Ijin</TableCell>
-												<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Sakit</TableCell>
-												<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Libur</TableCell>
-												<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Total Kerja</TableCell>
-												<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Gaji/Hari</TableCell>
-												<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Total Gaji</TableCell>
-												<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Potongan</TableCell>
-												<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5' }}>Bonus</TableCell>
-												<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', color: '#1976d2' }}>Gaji Akhir</TableCell>
-											</TableRow>
-										</TableHead>
-										<TableBody>
-											{salaries.map((row: any, index: number) => (
-												<TableRow key={row.id} hover sx={{ backgroundColor: index % 2 === 0 ? '#fafafa' : 'white' }}>
-													<TableCell align="center" sx={{ fontWeight: 'medium' }}>{row.month}/{row.year}</TableCell>
-													<TableCell sx={{ fontWeight: 'medium' }}>{row.employee_name}</TableCell>
-													<TableCell>{row.employee_position}</TableCell>
-													<TableCell align="right">{formatCurrency(row.base_salary)}</TableCell>
-													<TableCell align="center">
-														<Chip 
-															label={row.present_days} 
-															color="success" 
-															size="small" 
-															variant="outlined"
-														/>
-													</TableCell>
-													<TableCell align="center">
-														<Chip 
-															label={row.absent_days} 
-															color="error" 
-															size="small" 
-															variant="outlined"
-														/>
-													</TableCell>
-													<TableCell align="center">
-														<Chip 
-															label={row.sick_days} 
-															color="warning" 
-															size="small" 
-															variant="outlined"
-														/>
-													</TableCell>
-													<TableCell align="center">
-														<Chip 
-															label={row.holiday_days} 
-															color="info" 
-															size="small" 
-															variant="outlined"
-														/>
-													</TableCell>
-													<TableCell align="center">
-														<Chip 
-															label={row.total_working_days} 
-															color="primary" 
-															size="small"
-														/>
-													</TableCell>
-													<TableCell align="right">{formatCurrency(row.salary_per_day)}</TableCell>
-													<TableCell align="right">{formatCurrency(row.total_salary)}</TableCell>
-													<TableCell align="right" sx={{ color: row.deductions > 0 ? '#d32f2f' : 'inherit' }}>
-														{formatCurrency(row.deductions)}
-													</TableCell>
-													<TableCell align="right" sx={{ color: row.bonuses > 0 ? '#2e7d32' : 'inherit' }}>
-														{formatCurrency(row.bonuses)}
-													</TableCell>
-													<TableCell align="right">
-														<Typography variant="body2" fontWeight="bold" color="primary">
-															{formatCurrency(row.final_salary)}
-														</Typography>
-													</TableCell>
+									<Box sx={{ 
+										width: '100%', 
+										overflow: 'auto',
+										flexGrow: 1,
+										'&::-webkit-scrollbar': {
+											width: '8px',
+											height: '8px',
+										},
+										'&::-webkit-scrollbar-track': {
+											background: '#f1f1f1',
+											borderRadius: '4px',
+										},
+										'&::-webkit-scrollbar-thumb': {
+											background: '#c1c1c1',
+											borderRadius: '4px',
+											'&:hover': {
+												background: '#a8a8a8',
+											},
+										},
+									}}>
+										<Table size="small" sx={{ minWidth: 1200 }}>
+											<TableHead sx={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: 'white' }}>
+												<TableRow>
+													<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 80 }}>Periode</TableCell>
+													<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 150 }}>Nama Karyawan</TableCell>
+													<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Posisi</TableCell>
+													<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Gaji Pokok</TableCell>
+													<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 80 }}>Hadir</TableCell>
+													<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 80 }}>Ijin</TableCell>
+													<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 80 }}>Sakit</TableCell>
+													<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 80 }}>Libur</TableCell>
+													<TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 100 }}>Total Kerja</TableCell>
+													<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Gaji/Hari</TableCell>
+													<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Total Gaji</TableCell>
+													<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Potongan</TableCell>
+													<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Bonus</TableCell>
+													<TableCell align="right" sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', color: '#1976d2', minWidth: 120 }}>Gaji Akhir</TableCell>
 												</TableRow>
-											))}
-										</TableBody>
-									</Table>
+											</TableHead>
+											<TableBody>
+												{salaries.map((row: any, index: number) => (
+													<TableRow key={row.id} hover sx={{ backgroundColor: index % 2 === 0 ? '#fafafa' : 'white' }}>
+														<TableCell align="center" sx={{ fontWeight: 'medium' }}>{row.month}/{row.year}</TableCell>
+														<TableCell sx={{ fontWeight: 'medium' }}>{row.employee_name}</TableCell>
+														<TableCell>{row.employee_position}</TableCell>
+														<TableCell align="right">{formatCurrency(row.base_salary)}</TableCell>
+														<TableCell align="center">
+															<Chip 
+																label={row.present_days} 
+																color="success" 
+																size="small" 
+																variant="outlined"
+															/>
+														</TableCell>
+														<TableCell align="center">
+															<Chip 
+																label={row.absent_days} 
+																color="error" 
+																size="small" 
+																variant="outlined"
+															/>
+														</TableCell>
+														<TableCell align="center">
+															<Chip 
+																label={row.sick_days} 
+																color="warning" 
+																size="small" 
+																variant="outlined"
+															/>
+														</TableCell>
+														<TableCell align="center">
+															<Chip 
+																label={row.holiday_days} 
+																color="info" 
+																size="small" 
+																variant="outlined"
+															/>
+														</TableCell>
+														<TableCell align="center">
+															<Chip 
+																label={row.total_working_days} 
+																color="primary" 
+																size="small"
+															/>
+														</TableCell>
+														<TableCell align="right">{formatCurrency(row.salary_per_day)}</TableCell>
+														<TableCell align="right">{formatCurrency(row.total_salary)}</TableCell>
+														<TableCell align="right" sx={{ color: row.deductions > 0 ? '#d32f2f' : 'inherit' }}>
+															{formatCurrency(row.deductions)}
+														</TableCell>
+														<TableCell align="right" sx={{ color: row.bonuses > 0 ? '#2e7d32' : 'inherit' }}>
+															{formatCurrency(row.bonuses)}
+														</TableCell>
+														<TableCell align="right">
+															<Typography variant="body2" fontWeight="bold" color="primary">
+																{formatCurrency(row.final_salary)}
+															</Typography>
+														</TableCell>
+													</TableRow>
+												))}
+											</TableBody>
+										</Table>
+									</Box>
 								) : (
 									<Box sx={{ textAlign: 'center', py: 4 }}>
 										<Typography color="text.secondary">
@@ -480,9 +509,9 @@ export default function AttendancesPage() {
 								)}
 							</CardContent>
 						</Card>
-					</Grid>
-				</Grid>
-			</TabPanel>
+					</Box>
+				</TabPanel>
+			</Box>
 
 			<Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
 				<DialogTitle>Tambah Absensi</DialogTitle>
@@ -632,6 +661,6 @@ export default function AttendancesPage() {
 			</Dialog>
 
 
-		</Grid>
+		</Box>
 	);
 }

@@ -208,11 +208,9 @@ router.post('/', [
 // @desc    Update milk collection
 // @access  Private
 router.put('/:id', [
-  body('collector_id').isInt().withMessage('Valid collector ID is required'),
   body('morning_amount').optional().isFloat({ min: 0 }).withMessage('Morning amount must be a positive number'),
   body('afternoon_amount').optional().isFloat({ min: 0 }).withMessage('Afternoon amount must be a positive number'),
-  body('price_per_liter').isFloat({ min: 0 }).withMessage('Price per liter must be a positive number'),
-  body('date').isDate().withMessage('Valid date is required')
+  body('price_per_liter').isFloat({ min: 0 }).withMessage('Price per liter must be a positive number')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -223,17 +221,9 @@ router.put('/:id', [
       });
     }
 
-    const { collector_id, date } = req.body;
     const morning_amount = req.body.morning_amount !== undefined ? Number(req.body.morning_amount) : 0;
     const afternoon_amount = req.body.afternoon_amount !== undefined ? Number(req.body.afternoon_amount) : 0;
-    let price_per_liter = req.body.price_per_liter !== undefined ? Number(req.body.price_per_liter) : undefined;
-
-    if ((morning_amount <= 0) && (afternoon_amount <= 0)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Either morning_amount or afternoon_amount must be greater than 0'
-      });
-    }
+    const price_per_liter = Number(req.body.price_per_liter);
     const collectionId = req.params.id;
 
     // Check if collection exists and get current data
@@ -283,46 +273,11 @@ router.put('/:id', [
       });
     }
 
-    // Check if collector exists
-    const [collector] = await db.promise().query(
-      'SELECT id FROM milk_collectors WHERE id = ?',
-      [collector_id]
-    );
-
-    if (collector.length === 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Collector not found' 
-      });
-    }
-
-    // Check if another collection exists for this date and collector with same time period (excluding current collection)
-    const [duplicateCollections] = await db.promise().query(
-      'SELECT id, morning_amount, afternoon_amount FROM milk_collections WHERE collector_id = ? AND date = ? AND id != ?',
-      [collector_id, date, collectionId]
-    );
-
-    // Check if we're trying to update morning data when morning already exists in another collection
-    if (morning_amount > 0 && duplicateCollections.some(c => c.morning_amount > 0)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Morning collection already exists for this date and collector in another record. Please choose a different date or collector.' 
-      });
-    }
-
-    // Check if we're trying to update afternoon data when afternoon already exists in another collection
-    if (afternoon_amount > 0 && duplicateCollections.some(c => c.afternoon_amount > 0)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Afternoon collection already exists for this date and collector in another record. Please choose a different date or collector.' 
-      });
-    }
-
 
 
     await db.promise().query(
-      'UPDATE milk_collections SET collector_id = ?, morning_amount = ?, afternoon_amount = ?, price_per_liter = ?, date = ? WHERE id = ?',
-      [collector_id, morning_amount, afternoon_amount, price_per_liter, date, collectionId]
+      'UPDATE milk_collections SET morning_amount = ?, afternoon_amount = ?, price_per_liter = ? WHERE id = ?',
+      [morning_amount, afternoon_amount, price_per_liter, collectionId]
     );
 
     const [updatedCollection] = await db.promise().query(

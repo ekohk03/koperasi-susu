@@ -1,4 +1,4 @@
-import { Add, Download, PhotoCamera, Visibility } from '@mui/icons-material';
+import { Add, Download, PhotoCamera, Visibility, Edit, Delete } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, IconButton } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -35,7 +35,12 @@ export default function IncomesPage() {
 		setOpen(true);
 	};
 	const openEdit = (row: any) => {
-		setForm(row);
+		// Ensure date is in YYYY-MM-DD format for date input
+		const formattedDate = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
+		setForm({
+			...row,
+			date: formattedDate
+		});
 		setPreview(row.proof_image ? `${BASE_URL}/uploads/${row.proof_image}` : null);
 		setOpen(true);
 	};
@@ -50,7 +55,10 @@ export default function IncomesPage() {
 			const formData = new FormData();
 			formData.append('source', form.source);
 			formData.append('amount', form.amount);
-			formData.append('date', form.date);
+			// Only append date for new records, not for edits
+			if (!form.id) {
+				formData.append('date', form.date);
+			}
 			formData.append('description', form.description);
 			if (fileRef.current && fileRef.current.files && fileRef.current.files[0]) {
 				formData.append('proof_image', fileRef.current.files[0]);
@@ -92,7 +100,7 @@ export default function IncomesPage() {
 				<Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 					<Typography variant="h5" fontWeight={700}>Pemasukan</Typography>
 					<Box sx={{ display: 'flex', gap: 1 }}>
-						<Button variant="outlined" startIcon={<Download />} onClick={doExport}>Export</Button>
+						<Button variant="contained" startIcon={<Download />} onClick={doExport} color="primary">Download</Button>
 						<Button variant="contained" startIcon={<Add />} onClick={openCreate}>Tambah</Button>
 					</Box>
 				</Box>
@@ -108,7 +116,7 @@ export default function IncomesPage() {
 									<TableCell>Tanggal</TableCell>
 									<TableCell>Keterangan</TableCell>
 									<TableCell>Bukti</TableCell>
-									<TableCell align="right">Aksi</TableCell>
+															<TableCell align="center">Aksi</TableCell>
 								</TableRow>
 							</TableHead>
 							<TableBody>
@@ -125,11 +133,17 @@ export default function IncomesPage() {
 												</a>
 											) : '-'}
 										</TableCell>
-										<TableCell align="right">
-											<IconButton size="small" onClick={() => openDetail(row)}><Visibility /></IconButton>
-											<Button size="small" onClick={() => openEdit(row)}>Edit</Button>
-											<Button size="small" color="error" onClick={() => remove(row.id)}>Hapus</Button>
-										</TableCell>
+															<TableCell align="center">
+																<IconButton size="small" onClick={() => openDetail(row)} color="success">
+																	<Visibility />
+																</IconButton>
+																<IconButton size="small" onClick={() => openEdit(row)} color="primary">
+																	<Edit />
+																</IconButton>
+																<IconButton size="small" onClick={() => remove(row.id)} color="error">
+																	<Delete />
+																</IconButton>
+															</TableCell>
 									</TableRow>
 								))}
 							</TableBody>
@@ -143,7 +157,17 @@ export default function IncomesPage() {
 				<DialogContent>
 					<TextField label="Sumber" fullWidth margin="normal" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} />
 					<TextField label="Jumlah" type="number" fullWidth margin="normal" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-					<TextField label="Tanggal" type="date" InputLabelProps={{ shrink: true }} fullWidth margin="normal" value={form.date?.slice(0,10) || ''} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+					{!form.id && (
+						<TextField 
+							label="Tanggal" 
+							type="date" 
+							InputLabelProps={{ shrink: true }} 
+							fullWidth 
+							margin="normal" 
+							value={form.date?.slice(0,10) || ''} 
+							onChange={(e) => setForm({ ...form, date: e.target.value })}
+						/>
+					)}
 					<TextField label="Keterangan" fullWidth margin="normal" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
 					<input type="file" ref={fileRef} accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
 					<Button variant="outlined" startIcon={<PhotoCamera />} onClick={() => fileRef.current?.click()} sx={{ mt: 2 }}>

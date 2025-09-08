@@ -22,9 +22,11 @@ export default function ShipmentsPage() {
   };
 
   const openEdit = (row: any) => {
+    // Ensure date is in YYYY-MM-DD format for date input
+    const formattedDate = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
     setForm({
       id: row.id,
-      date: row.date,
+      date: formattedDate,
       amount: row.amount.toString(),
       destination: row.destination,
       notes: row.notes || ''
@@ -50,15 +52,23 @@ export default function ShipmentsPage() {
   const saveEdit = async () => {
     try {
       await axios.put(`/api/shipments/${form.id}`, {
-        ...form,
-        amount: Number(form.amount)
+        date: form.date,
+        amount: Number(form.amount),
+        destination: form.destination,
+        notes: form.notes
       });
       setEditOpen(false);
       setForm({ id: '', date: dayjs().format('YYYY-MM-DD'), amount: '', destination: '', notes: '' });
       queryClient.invalidateQueries({ queryKey: ['shipments'] });
       alert('Pengiriman berhasil diupdate!');
     } catch (err: any) {
-      alert('Gagal mengupdate: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+      console.error('Update error:', err);
+      if (err.response && err.response.status === 400 && err.response.data && err.response.data.errors) {
+        const msg = err.response.data.errors.map((e: any) => e.msg).join('\n');
+        alert('Gagal mengupdate:\n' + msg);
+      } else {
+        alert('Gagal mengupdate: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+      }
     }
   };
 
