@@ -1,3 +1,5 @@
+// routes/employees.js
+
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const db = require('../config/database');
@@ -180,7 +182,6 @@ router.put('/:id', [
   body('name').notEmpty().withMessage('Name is required'),
   body('position').notEmpty().withMessage('Position is required'),
   body('salary').isFloat({ min: 0 }).withMessage('Salary must be a positive number'),
-  body('join_date').notEmpty().withMessage('Join date is required'),
   body('phone').optional()
 ], async (req, res) => {
   try {
@@ -196,9 +197,9 @@ router.put('/:id', [
       });
     }
 
-    const { name, position, salary, join_date, phone, address } = req.body;
+    const { name, position, salary, phone, address } = req.body;
     const employeeId = req.params.id;
-    console.log('Extracted data:', { name, position, salary, join_date, phone, address });
+    console.log('Extracted data:', { name, position, salary, phone, address });
 
     // Check if employee exists
     const [existingEmployee] = await db.promise().query(
@@ -213,10 +214,10 @@ router.put('/:id', [
       });
     }
 
-    console.log('Executing UPDATE query with params:', [name, position, salary, join_date, phone, address, employeeId]);
+    console.log('Executing UPDATE query with params:', [name, position, salary, phone, address, employeeId]);
     await db.promise().query(
-      'UPDATE employees SET name = ?, position = ?, salary = ?, join_date = ?, phone = ?, address = ? WHERE id = ?',
-      [name, position, salary, join_date, phone, address, employeeId]
+      'UPDATE employees SET name = ?, position = ?, salary = ?, phone = ?, address = ? WHERE id = ?',
+      [name, position, salary, phone, address, employeeId]
     );
     console.log('UPDATE query executed successfully');
 
@@ -291,10 +292,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-
-
-
-

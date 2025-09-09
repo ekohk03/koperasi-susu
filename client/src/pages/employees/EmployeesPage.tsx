@@ -1,3 +1,5 @@
+// client/src/pages/employees/EmployeesPage.tsx
+
 import { Add, Visibility, Edit, Delete, Download } from '@mui/icons-material';
 import { Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Chip, Divider } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -44,12 +46,12 @@ export default function EmployeesPage() {
 	const save = async () => {
 		try {
 			console.log('Saving employee data:', form);
+			// Pastikan join_date hanya dikirim untuk data baru
 			const payload = { 
 				...form, 
 				salary: Number(form.salary),
-				join_date: form.join_date ? new Date(form.join_date).toISOString().split('T')[0] : null
+				join_date: form.id ? undefined : (form.join_date ? new Date(form.join_date).toISOString().split('T')[0] : null)
 			};
-			console.log('Payload:', payload);
 			
 			if (form.id) {
 				console.log('Updating employee with ID:', form.id);
@@ -69,7 +71,14 @@ export default function EmployeesPage() {
 			queryClient.invalidateQueries({ queryKey: ['employee-detail'] });
 		} catch (error) {
 			console.error('Error saving employee:', error);
-			alert('Error: ' + (error.response?.data?.message || error.message || 'Gagal menyimpan data karyawan'));
+			let message = 'Gagal menyimpan data karyawan';
+			if (typeof error === 'object' && error !== null && 'response' in error) {
+				const errObj = error as any;
+				message = errObj.response?.data?.message || errObj.message || message;
+			} else if (error instanceof Error) {
+				message = error.message;
+			}
+			alert('Error: ' + message);
 		}
 	};
 
@@ -81,7 +90,14 @@ export default function EmployeesPage() {
 			queryClient.invalidateQueries({ queryKey: ['employees'] });
 		} catch (err: any) {
 			console.error('Delete error:', err);
-			alert('Gagal menghapus: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+			let message = 'Unknown error';
+			if (typeof err === 'object' && err !== null && 'response' in err) {
+				const errObj = err as any;
+				message = errObj.response?.data?.message || errObj.message || message;
+			} else if (err instanceof Error) {
+				message = err.message;
+			}
+			alert('Gagal menghapus: ' + message);
 		}
 	};
 
@@ -110,7 +126,14 @@ export default function EmployeesPage() {
 			window.URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error('Download error:', error);
-			alert('Gagal mengunduh file: ' + (error.response?.data?.message || error.message || 'Unknown error'));
+			let message = 'Unknown error';
+			if (typeof error === 'object' && error !== null && 'response' in error) {
+				const errObj = error as any;
+				message = errObj.response?.data?.message || errObj.message || message;
+			} else if (error instanceof Error) {
+				message = error.message;
+			}
+			alert('Gagal mengunduh file: ' + message);
 		}
 	};
 
@@ -211,18 +234,14 @@ export default function EmployeesPage() {
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm">
 				<DialogTitle>Edit Karyawan</DialogTitle>
 				<DialogContent>
+					<Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+						<Typography variant="body2" color="text.secondary">
+							Tanggal Bergabung: {form.join_date ? new Date(form.join_date).toLocaleDateString('id-ID') : '-'}
+						</Typography>
+					</Box>
 					<TextField label="Nama" fullWidth margin="normal" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
 					<TextField label="Posisi" fullWidth margin="normal" value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} />
 					<TextField label="Gaji" type="number" fullWidth margin="normal" value={form.salary} onChange={(e) => setForm({ ...form, salary: e.target.value })} />
-					<TextField 
-						label="Tanggal Gabung" 
-						type="date" 
-						InputLabelProps={{ shrink: true }} 
-						fullWidth 
-						margin="normal" 
-						value={form.join_date ? (typeof form.join_date === 'string' ? form.join_date.slice(0,10) : new Date(form.join_date).toISOString().split('T')[0]) : ''} 
-						onChange={(e) => setForm({ ...form, join_date: e.target.value })} 
-					/>
 					<TextField label="Telepon" fullWidth margin="normal" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
 					<TextField label="Alamat" fullWidth margin="normal" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
 				</DialogContent>
@@ -376,10 +395,10 @@ export default function EmployeesPage() {
 					) : detailError ? (
 						<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, gap: 2 }}>
 							<Typography color="error" variant="h6">
-								Error: {detailError.response?.data?.message || detailError.message || 'Tidak dapat memuat data karyawan'}
+								Error: {typeof detailError === 'object' && detailError !== null && 'response' in detailError ? (detailError as any).response?.data?.message : detailError instanceof Error ? detailError.message : 'Tidak dapat memuat data karyawan'}
 							</Typography>
 							<Typography color="text.secondary" variant="body2">
-								Status: {detailError.response?.status || 'Unknown'}
+								Status: {typeof detailError === 'object' && detailError !== null && 'response' in detailError ? (detailError as any).response?.status : 'Unknown'}
 							</Typography>
 							<Button 
 								variant="outlined" 
@@ -415,10 +434,3 @@ export default function EmployeesPage() {
 		</Grid>
 	);
 }
-
-
-
-
-
-
-

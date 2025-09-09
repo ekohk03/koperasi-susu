@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 router.post(
   '/',
   [
-    body('date').isISO8601().withMessage('Tanggal wajib diisi'),
+    body('date').isDate().withMessage('Tanggal wajib diisi'),
     body('amount').isFloat({ min: 0.01 }).withMessage('Jumlah susu wajib diisi dan harus lebih dari 0'),
     body('destination').notEmpty().withMessage('Tujuan wajib diisi'),
     body('notes').optional().isString()
@@ -47,7 +47,7 @@ router.post(
 router.put(
   '/:id',
   [
-    body('date').isISO8601().withMessage('Tanggal wajib diisi'),
+    body('date').isDate().withMessage('Tanggal wajib diisi'),
     body('amount').isFloat({ min: 0.01 }).withMessage('Jumlah susu wajib diisi dan harus lebih dari 0'),
     body('destination').notEmpty().withMessage('Tujuan wajib diisi'),
     body('notes').optional().isString()
@@ -116,6 +116,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-
-
-

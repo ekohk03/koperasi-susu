@@ -22,13 +22,11 @@ export default function ShipmentsPage() {
   };
 
   const openEdit = (row: any) => {
-    // Ensure date is in YYYY-MM-DD format for date input
-    const formattedDate = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
     setForm({
       id: row.id,
-      date: formattedDate,
-      amount: row.amount.toString(),
-      destination: row.destination,
+      date: row.date ? dayjs(row.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+      amount: row.amount?.toString() || '',
+      destination: row.destination || '',
       notes: row.notes || ''
     });
     setEditOpen(true);
@@ -52,7 +50,7 @@ export default function ShipmentsPage() {
   const saveEdit = async () => {
     try {
       await axios.put(`/api/shipments/${form.id}`, {
-        date: form.date,
+        date: form.date, // pastikan date selalu dikirim
         amount: Number(form.amount),
         destination: form.destination,
         notes: form.notes
@@ -62,13 +60,13 @@ export default function ShipmentsPage() {
       queryClient.invalidateQueries({ queryKey: ['shipments'] });
       alert('Pengiriman berhasil diupdate!');
     } catch (err: any) {
-      console.error('Update error:', err);
-      if (err.response && err.response.status === 400 && err.response.data && err.response.data.errors) {
-        const msg = err.response.data.errors.map((e: any) => e.msg).join('\n');
-        alert('Gagal mengupdate:\n' + msg);
+      let errorMsg = 'Gagal mengupdate: ';
+      if (err?.response?.data?.errors) {
+        errorMsg += err.response.data.errors.map((e: any) => e.msg).join(', ');
       } else {
-        alert('Gagal mengupdate: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+        errorMsg += err?.response?.data?.message || err?.message || 'Unknown error';
       }
+      alert(errorMsg);
     }
   };
 
@@ -188,15 +186,11 @@ export default function ShipmentsPage() {
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Edit Pengiriman Susu</DialogTitle>
         <DialogContent>
-          <TextField
-            label="Tanggal"
-            type="date"
-            fullWidth
-            margin="normal"
-            value={form.date}
-            onChange={e => setForm({ ...form, date: e.target.value })}
-            InputLabelProps={{ shrink: true }}
-          />
+          <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Tanggal: {dayjs(form.date).format('DD/MM/YYYY')}
+            </Typography>
+          </Box>
           <TextField
             label="Jumlah Susu (Liter)"
             type="number"

@@ -1,5 +1,5 @@
-import { Add, Delete, Visibility } from '@mui/icons-material';
-import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Alert, Chip, Tabs, Tab, Paper, Divider } from '@mui/material';
+import { Add, Delete, Visibility, Edit } from '@mui/icons-material';
+import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Select, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography, Alert, Chip, Tabs, Tab, Paper, Divider, IconButton } from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -89,6 +89,9 @@ export default function AttendancesPage() {
 	const [availableMonths, setAvailableMonths] = useState<any[]>([]);
 	const [selectedMonthData, setSelectedMonthData] = useState<any>(null);
 
+	// Tambahkan state untuk edit dialog
+	const [editOpen, setEditOpen] = useState(false);
+	const [editForm, setEditForm] = useState<any>({ id: '', employee_id: '', date: '', status: '', notes: '' });
 
 
 	useEffect(() => {
@@ -112,7 +115,8 @@ export default function AttendancesPage() {
 			await axios.post('/api/attendances', { ...form, employee_id: Number(form.employee_id) });
 			alert('Berhasil menambahkan absensi!');
 			setOpen(false);
-			queryClient.invalidateQueries({ queryKey: ['attendances'] });
+			queryClient.invalidateQueries({ queryKey: ['attendances', filters] });
+			queryClient.invalidateQueries({ queryKey: ['attendance-stats'] });
 		} catch (err: any) {
 			console.error('Save error:', err);
 			alert('Gagal menyimpan: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
@@ -143,7 +147,8 @@ export default function AttendancesPage() {
 			});
 			
 			setDeleteDialogOpen(false);
-			queryClient.invalidateQueries({ queryKey: ['attendances'] });
+			queryClient.invalidateQueries({ queryKey: ['attendances', filters] });
+			queryClient.invalidateQueries({ queryKey: ['attendance-stats'] });
 			
 			// Refresh available months
 			const res = await axios.get('/api/attendances/stats/available-months');
@@ -155,6 +160,51 @@ export default function AttendancesPage() {
 		}
 	};
 
+	const openEdit = (row: any) => {
+		setEditForm({
+			id: row.id,
+			employee_id: row.employee_id,
+			date: row.date,
+			status: row.status,
+			notes: row.notes || ''
+		});
+		setEditOpen(true);
+	};
+
+	const saveEdit = async () => {
+		try {
+			await axios.put(`/api/attendances/${editForm.id}`, {
+				employee_id: Number(editForm.employee_id),
+				date: dayjs(editForm.date).format('YYYY-MM-DD'),
+				status: editForm.status,
+				notes: editForm.notes
+			});
+			alert('Berhasil mengupdate absensi!');
+			setEditOpen(false);
+			queryClient.invalidateQueries({ queryKey: ['attendances', filters] });
+			queryClient.invalidateQueries({ queryKey: ['attendance-stats'] });
+		} catch (err: any) {
+			let errorMsg = 'Gagal mengupdate: ';
+			if (err?.response?.data?.errors) {
+				errorMsg += err.response.data.errors.map((e: any) => e.msg).join(', ');
+			} else {
+				errorMsg += err?.response?.data?.message || err?.message || 'Unknown error';
+			}
+			alert(errorMsg);
+		}
+	};
+
+	const removeAttendance = async (id: number) => {
+		if (!window.confirm('Hapus data absensi ini?')) return;
+		try {
+			await axios.delete(`/api/attendances/${id}`);
+			alert('Berhasil menghapus absensi!');
+			queryClient.invalidateQueries({ queryKey: ['attendances', filters] });
+			queryClient.invalidateQueries({ queryKey: ['attendance-stats'] });
+		} catch (err: any) {
+			alert('Gagal menghapus: ' + (err?.response?.data?.message || err?.message || 'Unknown error'));
+		}
+	};
 
 
 	const formatCurrency = (amount: number) => {
@@ -327,6 +377,7 @@ export default function AttendancesPage() {
 												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 120 }}>Posisi</TableCell>
 												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 100 }}>Status</TableCell>
 												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 200 }}>Catatan</TableCell>
+												<TableCell sx={{ fontWeight: 'bold', backgroundColor: '#f5f5f5', minWidth: 100 }} align="center">Aksi</TableCell>
 											</TableRow>
 										</TableHead>
 										<TableBody>
@@ -347,6 +398,14 @@ export default function AttendancesPage() {
 														/>
 													</TableCell>
 													<TableCell>{row.notes}</TableCell>
+													<TableCell align="center">
+														<IconButton size="small" color="primary" onClick={() => openEdit(row)} sx={{ mr: 1 }}>
+															<Edit />
+														</IconButton>
+														<IconButton size="small" color="error" onClick={() => removeAttendance(row.id)}>
+															<Delete />
+														</IconButton>
+													</TableCell>
 												</TableRow>
 											))}
 										</TableBody>
@@ -657,6 +716,29 @@ export default function AttendancesPage() {
 					>
 						Hapus Data
 					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Dialog Edit Absensi */}
+			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm">
+				<DialogTitle>Edit Absensi</DialogTitle>
+				<DialogContent>
+					<Box sx={{ mb: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+						<Typography variant="body2" color="text.secondary">
+							Tanggal: {dayjs(editForm.date).format('DD/MM/YYYY')}
+						</Typography>
+					</Box>
+					<Select fullWidth value={editForm.status} onChange={(e) => setEditForm({ ...editForm, status: e.target.value })} sx={{ mt: 2 }}>
+						<MenuItem value="hadir">Hadir</MenuItem>
+						<MenuItem value="ijin">Ijin</MenuItem>
+						<MenuItem value="libur">Libur</MenuItem>
+						<MenuItem value="sakit">Sakit</MenuItem>
+					</Select>
+					<TextField label="Catatan" fullWidth margin="normal" value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setEditOpen(false)}>Batal</Button>
+					<Button variant="contained" onClick={saveEdit}>Simpan</Button>
 				</DialogActions>
 			</Dialog>
 
